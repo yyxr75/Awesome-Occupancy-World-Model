@@ -71,7 +71,7 @@ The canonical generative/forecasting backbone, grouped by paradigm. This is the 
 - **I²-World** — Intra-Inter Tokenization for Efficient Dynamic 4D Scene Forecasting. *ICCV'25*. [[paper]](https://arxiv.org/abs/2507.09144) — decouples intra-scene (multi-scale residual VQ) and inter-scene (temporal) tokenizers; encoder-decoder, real-time.
 - **OccTENS** — 3D Occupancy World Model via Temporal Next-Scale Prediction. *RA-L'26*. [[paper]]([https://arxiv.org/abs/2509.03887](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=11358403)) — decomposes into spatial scale-by-scale + temporal scene-by-scene; pose-controllable long-term generation.
 - **T³Former** — Delta-Triplane Transformers as Occupancy World Models. *arXiv'25*. [[paper]](https://arxiv.org/abs/2503.07338) — pretrained triplanes + multi-scale transformers; predicts *triplane changes* for forecasting + planning, real-time.
-- **AFMWM** — high-ratio Swin-VAE compressor + efficient latent forecasting. *2025*. — efficiency-oriented latent occ world model.
+- **Foundational LiDAR World Models (Swin-VAE + Latent Flow Matching)** — Liu et al. *nips'25*. [[paper]](https://arxiv.org/abs/2506.23434) — high-ratio Swin-Transformer VAE + latent flow matching; strong semantic-occ forecasting
 
 ### D. Vision-centric forecasting + planning
 
