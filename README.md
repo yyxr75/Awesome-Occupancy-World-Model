@@ -12,6 +12,7 @@ Most existing lists are chronological dumps. This one is organized by **what pro
 
 - [The leaderboard (and how to read it honestly)](#the-leaderboard-and-how-to-read-it-honestly)
 - [Foundational occ world models](#foundational-occ-world-models)
+  - [A. Token-AR / GPT-style](#a-token-ar--gpt-style-generative) · [B. Diffusion](#b-diffusion-based-generative) · [C. Next-scale (VAR)](#c-next-scale-var--efficient-tokenization-generative) · [D. Vision-centric + planning](#d-vision-centric-forecasting--planning) · [E. Self-supervised / pretraining](#e-self-supervised--pretraining-world-models)
 - [Direction 1 — Representation](#direction-1--representation)
   - [1a. Grid latent: VQ / VAE / tri-plane / next-scale](#1a-grid-latent-vq--vae--tri-plane--next-scale)
   - [1b. Gaussian / object-centric](#1b-gaussian--object-centric)
@@ -44,20 +45,50 @@ Most existing lists are chronological dumps. This one is organized by **what pro
 
 ## Foundational occ world models
 
-The canonical forecasting backbone — read these first.
+The canonical generative/forecasting backbone, grouped by paradigm. This is the master list; the Direction sections below re-slice these by research axis.
+
+### A. Token-AR / GPT-style generative
 
 - **OccWorld** — Learning a 3D Occupancy World Model for Autonomous Driving. *ECCV'24*. [[paper]](https://arxiv.org/abs/2311.16038) · [[code]](https://github.com/wzzheng/OccWorld) — GPT-style token-AR; jointly forecasts scene evolution + ego trajectory. The seed of the field.
-- **OccSora** — 4D Occupancy Generation Models as World Simulators. *arXiv'24*. [[paper]](https://arxiv.org/abs/2405.20337) · [[code]](https://github.com/wzzheng/OccSora) — 4D scene tokenizer + DiT; diffusion-based occ generation as a "world simulator."
+- **OccLLaMA** — An Occupancy-Language-Action Generative World Model. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.03272) — folds occupancy + language + action into one autoregressive vocabulary.
+- **Occ-LLM** — Enhancing Autonomous Driving with Occupancy-Based LLMs. *CVPR'25*. [[paper]](https://arxiv.org/abs/2502.06419) — couples an LLM with occupancy for forecasting + reasoning.
+- **RenderWorld** — World Model with Self-Supervised 3D Label. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.11356) — separate air / non-air grid tokenization for fine-grained 3D modeling.
+
+### B. Diffusion-based generative
+
+- **OccSora** — 4D Occupancy Generation Models as World Simulators. *arXiv'24*. [[paper]](https://arxiv.org/abs/2405.20337) · [[code]](https://github.com/wzzheng/OccSora) — 4D scene tokenizer + DiT; predicts occ evolution given arbitrary trajectories.
 - **DOME** — Taming Diffusion into a High-Fidelity Controllable Occupancy World Model. *arXiv'24*. [[paper]](https://arxiv.org/abs/2410.10429) — continuous Occ-VAE + spatio-temporal diffusion transformer; the diffusion baseline most follow-ups build on.
 - **COME** — Adding Scene-Centric Forecasting Control to Occupancy World Model. *NeurIPS'25*. [[paper]](https://arxiv.org/abs/2506.13260) — factors ego-motion out via scene-centric coordinates, injects a scene-centric forecast as control into a frozen DOME. Opened the "explicit-injection" line.
-- **I²-World** — Intra-Inter Tokenization for Efficient Dynamic 4D Scene Forecasting. *ICCV'25*. [[paper]](https://arxiv.org/abs/2507.09144) — decouples intra-scene (multi-scale residual VQ) and inter-scene (temporal) tokenizers; encoder-decoder, real-time.
+- **UniScene** — Unified Occupancy-centric Driving Scene Generation. *CVPR'25*. [[paper]](https://arxiv.org/abs/2412.05435) — one occ-centric hierarchy generating occ + multi-view video + LiDAR; occ-DiT first, then Gaussian-rendered guidance.
 - **GenieDrive** — Towards Physics-Aware Driving World Model with 4D Occupancy Guided Video Generation. *CVPR'26*. [[paper]](https://arxiv.org/abs/2512.12751) — tri-plane VAE + Mutual Control Attention + end-to-end training; current top of the Occ board, then renders occ → multi-view video.
-- **UniScene** — Unified Occupancy-centric Driving Scene Generation. *CVPR'25*. [[paper]](https://arxiv.org/abs/2412.05435) — one occupancy-centric hierarchy generating occ + multi-view video + LiDAR; occ-DiT first, then Gaussian-rendered guidance for video.
-- **OccLLaMA** — An Occupancy-Language-Action Generative World Model. *arXiv'24*. — occupancy + language + action in one autoregressive model.
-- **Occ-LLM** — Enhancing Autonomous Driving with Occupancy-Based LLMs. *CVPR'25*. [[paper]](https://arxiv.org/abs/2502.06419) — couples an LLM with occupancy for forecasting + reasoning.
-- **RenderWorld** — World Model with Self-Supervised 3D Label. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.11356) — Gaussian-based self-supervised occ labels feeding a world model.
-- **DFIT-OccWorld** — Efficient Occupancy World Model via Decoupled Dynamic Flow + Image-Assisted Training. *arXiv'24*. [[paper]](https://arxiv.org/abs/2412.13772) — decoupled dynamic flow; forecasts by warping static + predicting dynamic.
-- **Drive-OccWorld** — Vision-Centric 4D Occupancy Forecasting and Planning via World Models. *AAAI'25*. [[paper]](https://arxiv.org/abs/2408.14197) — controllable, vision-centric occ forecasting tied directly to planning.
+
+### C. Next-scale (VAR) / efficient-tokenization generative
+
+- **I²-World** — Intra-Inter Tokenization for Efficient Dynamic 4D Scene Forecasting. *ICCV'25*. [[paper]](https://arxiv.org/abs/2507.09144) — decouples intra-scene (multi-scale residual VQ) and inter-scene (temporal) tokenizers; encoder-decoder, real-time.
+- **OccVAR** — Scalable 4D Occupancy Prediction via Next-Scale Prediction. *ICLR'25*. [[paper]](https://openreview.net/forum?id=X2HnTFsFm8) — coarse-to-fine temporal next-scale prediction; ego movement prepended for controllable generation.
+- **OccTENS** — 3D Occupancy World Model via Temporal Next-Scale Prediction. *arXiv'25*. [[paper]](https://arxiv.org/abs/2509.03887) — decomposes into spatial scale-by-scale + temporal scene-by-scene; pose-controllable long-term generation.
+- **T³Former** — Delta-Triplane Transformers as Occupancy World Models. *arXiv'25*. [[paper]](https://arxiv.org/abs/2503.07338) — pretrained triplanes + multi-scale transformers; predicts *triplane changes* for forecasting + planning, real-time.
+- **AFMWM** — high-ratio Swin-VAE compressor + efficient latent forecasting. *2025*. — efficiency-oriented latent occ world model.
+
+### D. Vision-centric forecasting + planning
+
+- **Drive-OccWorld** — Vision-Centric 4D Occupancy Forecasting and Planning via World Models. *AAAI'25 (Oral)*. [[paper]](https://arxiv.org/abs/2408.14197) · [[code]](https://github.com/yuyang-cloud/Drive-OccWorld) — action-conditioned occ + flow forecasting wired directly into an end-to-end planner.
+- **DFIT-OccWorld** — Efficient Occupancy World Model via Decoupled Dynamic Flow + Image-Assisted Training. *arXiv'24*. [[paper]](https://arxiv.org/abs/2412.13772) — decoupled dynamic flow; non-autoregressive, warp static + predict dynamic.
+- **OccProphet** — Pushing the Efficiency Frontier of Camera-Only 4D Occupancy Forecasting. *ICLR'25*. [[paper]](https://arxiv.org/abs/2502.15180) — Observer–Forecaster–Refiner framework; lightweight, camera-only.
+- **PreWorld** — Semi-Supervised Vision-Centric 3D Occupancy World Model. *ICLR'25*. [[paper]](https://arxiv.org/abs/2502.07309) — 2D-render supervision (RGB / density / semantic) + state-conditioned forecasting, end-to-end from images.
+- **IR-WM** — Vision-Centric 4D Occupancy Forecasting and Planning via Implicit Residual World Models. *arXiv'25*. [[paper]](https://arxiv.org/abs/2510.16729) — predicts residual world change rather than the full next state.
+- **NeMo** — Neural Volumetric World Models for Autonomous Driving. *ECCV'24*. — volumetric WM with image-prediction + motion-flow modules for planning.
+
+### E. Self-supervised / pretraining world models
+
+*Occupancy forecasting as a pretext task — learn from raw LiDAR/video without dense occ labels.*
+
+- **UnO** — Unsupervised Occupancy Fields for Perception and Forecasting. *CVPR'24*. [[paper]](https://arxiv.org/abs/2406.08691) — continuous 4D occupancy field, self-supervised from LiDAR (pos/neg sampling); strong transfer + high mover recall.
+- **ViDAR** — Visual Point Cloud Forecasting enables Scalable Autonomous Driving. *CVPR'24*. [[paper]](https://arxiv.org/abs/2312.17655) — history encoder + latent rendering + future decoder; pretrains visual encoders by forecasting point clouds.
+- **4D-Occ-Forecasting** — Self-supervised via future point clouds + differentiable depth rendering. *CVPR'23*. [[paper]](https://arxiv.org/abs/2310.11239) — future point clouds as a proxy for future occ.
+- **UniWorld** — Autonomous Driving Pre-training via World Models. *arXiv'23*. [[paper]](https://arxiv.org/abs/2308.07234) — multi-frame point-cloud fusion for 4D occ-reconstruction pretraining.
+- **DriveWorld** — 4D Pre-trained Scene Understanding via World Models. *CVPR'24*. — memory-augmented spatio-temporal pretraining for downstream planning.
+- **Occupancy World Model for Robots** — *arXiv'25*. [[paper]](https://arxiv.org/abs/2505.05512) — carries the occ-WM recipe beyond driving into robotics.
 
 ---
 
