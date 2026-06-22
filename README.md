@@ -12,7 +12,11 @@ Most existing lists are chronological dumps. This one is organized by **what pro
 
 - [The leaderboard (and how to read it honestly)](#the-leaderboard-and-how-to-read-it-honestly)
 - [Foundational occ world models](#foundational-occ-world-models)
-  - [A. Token-AR / GPT-style](#a-token-ar--gpt-style-generative) · [B. Diffusion](#b-diffusion-based-generative) · [C. Next-scale (VAR)](#c-next-scale-var--efficient-tokenization-generative) · [D. Vision-centric + planning](#d-vision-centric-forecasting--planning) · [E. Self-supervised / pretraining](#e-self-supervised--pretraining-world-models)
+  - [A. Token-AR / GPT-style](#a-token-ar--gpt-style-generative)
+  - [B. Diffusion](#b-diffusion-based-generative)
+  - [C. Next-scale (VAR)](#c-next-scale-var--efficient-tokenization-generative)
+  - [D. Vision-centric + planning](#d-vision-centric-forecasting--planning)
+  - [E. Self-supervised / pretraining](#e-self-supervised--pretraining-world-models)
 - [Direction 1 — Representation](#direction-1--representation)
   - [1a. Grid latent: VQ / VAE / tri-plane / next-scale](#1a-grid-latent-vq--vae--tri-plane--next-scale)
   - [1b. Gaussian / object-centric](#1b-gaussian--object-centric)
