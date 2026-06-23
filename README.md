@@ -7,6 +7,12 @@ Most existing lists are chronological dumps. This one is organized by **what pro
 > **Scope.** Core = generative/forecasting world models in the 3D **occupancy** space. We also track the **video** and **LiDAR/point-cloud** world-model lines, because occ borrows machinery from both.
 
 ---
+## Overview Workflow
+
+<img width="2720" height="1536" alt="occ_world_model_design_choices" src="https://github.com/user-attachments/assets/4e25dfa6-2c4a-44c2-b0e6-cdb6f59c1119" />
+
+
+---
 
 ## Contents
 
