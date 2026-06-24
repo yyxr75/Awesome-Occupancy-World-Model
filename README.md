@@ -9,7 +9,8 @@ Most existing lists are chronological dumps. This one is organized by **what pro
 ---
 ## Overview Workflow
 
-<img width="2720" height="1536" alt="occ_world_model_design_choices" src="https://github.com/user-attachments/assets/4e25dfa6-2c4a-44c2-b0e6-cdb6f59c1119" />
+<img width="2720" height="1712" alt="occ_world_model_design_choices_with_gaussian" src="https://github.com/user-attachments/assets/432caace-9510-400b-a9de-39fc49b93160" />
+
 
 
 ---
