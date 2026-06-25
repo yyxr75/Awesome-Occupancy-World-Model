@@ -38,23 +38,23 @@ One row per model, decomposed across the axes. Read a row to understand a method
 
 | Model | Representation | Mechanism | Control (axis 3) | Supervision | Venue |
 |---|---|---|---|---|---|
-| **OccWorld** | VQ tokens | token-AR (GPT) | ego (joint) | GT occ | ECCV'24 |
-| **OccSora** | 4D tokenizer | diffusion (DiT) | trajectory | GT occ | arXiv'24 |
-| **DOME** | continuous VAE | diffusion (DiT) | ego-trajectory | GT occ | arXiv'24 |
-| **COME** | continuous VAE | diffusion + control | scene-centric forecast | GT occ | NeurIPS'25 |
-| **DynamicCity** | HexPlane | diffusion (DiT) | traj / command / layout | GT occ | ICLR'25 |
-| **UniScene** | occ-VAE | diffusion | **BEV layout** | GT occ | CVPR'25 |
-| **GenieDrive** | tri-plane VAE | AR + E2E | action (MCA) | GT occ | CVPR'26 |
-| **I²-World** | intra/inter VQ | token-AR (enc-dec) | scene-transform | GT occ | ICCV'25 |
-| **OccTENS** | next-scale tokens | next-scale AR | pose | GT occ | RA-L'26 |
-| **OccLLaMA** | VQ tokens | AR (LLM) | **language** (QA) + action | GT occ | arXiv'24 |
-| **X-Scene** | tri-plane VAE | diffusion | **text → layout** | GT occ | NeurIPS'25 |
-| **OccScene** | voxel + RGB | joint diffusion | **text** | GT occ | arXiv'24 |
-| **SemCity** | tri-plane | diffusion | unconditional / edit | GT occ | CVPR'24 |
-| **XCube** | sparse-voxel hierarchy | cascaded diffusion | uncond / weak text | shape/scene | CVPR'24 |
-| **Drive-OccWorld** | BEV | token-AR | action (vel/steer/cmd) | vision-centric | AAAI'25 |
-| **GaussianWorld** | 3D Gaussians | streaming update | sensor | vision-centric | CVPR'25 |
-| **UnO** | continuous field | — (occ field) | — | self-sup (LiDAR) | CVPR'24 |
+| [**OccWorld**](https://arxiv.org/abs/2311.16038) | VQ tokens | token-AR (GPT) | ego (joint) | GT occ | ECCV'24 |
+| [**OccSora**](https://arxiv.org/abs/2405.20337) | 4D tokenizer | diffusion (DiT) | trajectory | GT occ | arXiv'24 |
+| [**DOME**](https://arxiv.org/abs/2410.10429) | continuous VAE | diffusion (DiT) | ego-trajectory | GT occ | arXiv'24 |
+| [**COME**](https://arxiv.org/abs/2506.13260) | continuous VAE | diffusion + control | scene-centric forecast | GT occ | NeurIPS'25 |
+| [**DynamicCity**](https://arxiv.org/abs/2410.18084) | HexPlane | diffusion (DiT) | traj / command / layout | GT occ | ICLR'25 |
+| [**UniScene**](https://arxiv.org/abs/2412.05435) | occ-VAE | diffusion | **BEV layout** | GT occ | CVPR'25 |
+| [**GenieDrive**](https://arxiv.org/abs/2512.12751) | tri-plane VAE | AR + E2E | action (MCA) | GT occ | CVPR'26 |
+| [**I²-World**](https://arxiv.org/abs/2507.09144) | intra/inter VQ | token-AR (enc-dec) | scene-transform | GT occ | ICCV'25 |
+| [**OccTENS**](https://arxiv.org/abs/2509.03887) | next-scale tokens | next-scale AR | pose | GT occ | RA-L'26 |
+| [**OccLLaMA**](https://arxiv.org/abs/2409.03272) | VQ tokens | AR (LLM) | **language** (QA) + action | GT occ | arXiv'24 |
+| [**X-Scene**](https://arxiv.org/abs/2506.13558) | tri-plane VAE | diffusion | **text → layout** | GT occ | NeurIPS'25 |
+| [**OccScene**](https://arxiv.org/abs/2412.11183) | voxel + RGB | joint diffusion | **text** | GT occ | arXiv'24 |
+| [**SemCity**](https://arxiv.org/abs/2403.07773) | tri-plane | diffusion | unconditional / edit | GT occ | CVPR'24 |
+| [**XCube**](https://arxiv.org/abs/2312.03806) | sparse-voxel hierarchy | cascaded diffusion | uncond / weak text | shape/scene | CVPR'24 |
+| [**Drive-OccWorld**](https://arxiv.org/abs/2408.14197) | BEV | token-AR | action (vel/steer/cmd) | vision-centric | AAAI'25 |
+| [**GaussianWorld**](https://arxiv.org/abs/2412.10373) | 3D Gaussians | streaming update | sensor | vision-centric | CVPR'25 |
+| [**UnO**](https://arxiv.org/abs/2406.08691) | continuous field | — (occ field) | — | self-sup (LiDAR) | CVPR'24 |
 
 *Patterns to notice:* representation is trending **plane-factored** (triplane/hexplane) for efficiency; mechanism splits **AR (planning-friendly, fast)** vs **diffusion (fidelity, controllable)**; the **control** column climbs a ladder that runs out exactly at *language → per-agent behavior*; almost everything is supervised on **GT occ** — self-/vision-supervision is the minority.
 
@@ -125,7 +125,7 @@ One row per model, decomposed across the axes. Read a row to understand a method
 - **GT occ labels** — the default for every generator above.
 - **Self-supervised from LiDAR / point clouds** — no dense occ labels. **UnO** (continuous 4D occ field) [[paper]](https://arxiv.org/abs/2406.08691) · **ViDAR** (visual point-cloud forecasting pretraining) [[paper]](https://arxiv.org/abs/2312.17655) · **4D-Occ-Forecasting** [[paper]](https://arxiv.org/abs/2310.11239) · **UniWorld** [[paper]](https://arxiv.org/abs/2308.07234).
 - **Vision-centric (RGB in)** — deployable, no occ at inference. **Drive-OccWorld** [[paper]](https://arxiv.org/abs/2408.14197) · **PreWorld** (2D-render supervision) [[paper]](https://arxiv.org/abs/2502.07309) · **OccProphet** (camera-only, efficient) [[paper]](https://arxiv.org/abs/2502.15180) · **RenderWorld** (Gaussian self-supervised label) [[paper]](https://arxiv.org/abs/2409.11356).
-- **Pretraining / pretext** — occ forecasting as representation learning. **DriveWorld** *CVPR'24* · **UniWorld** [[paper]](https://arxiv.org/abs/2308.07234) · **Occupancy World Model for Robots** [[paper]](https://arxiv.org/abs/2505.05512).
+- **Pretraining / pretext** — occ forecasting as representation learning. **DriveWorld** [[paper]](https://arxiv.org/abs/2405.04390) · **UniWorld** [[paper]](https://arxiv.org/abs/2308.07234) · **Occupancy World Model for Robots** [[paper]](https://arxiv.org/abs/2505.05512).
 
 ---
 ---
@@ -138,17 +138,17 @@ One row per model, decomposed across the axes. Read a row to understand a method
 
 | Dataset | Grid / range | Classes | Used for |
 |---|---|---|---|
-| **Occ3D-nuScenes** | 200×200×16 · 0.4 m · ±40 m | 17 (+free) | the main **forecasting & generation** bench |
-| **nuScenes-Occupancy / OpenOccupancy** | denser voxels | 16 | occ prediction, generation recon |
-| **SemanticKITTI** | 256×256×32 · 0.2 m | 19 | outdoor **scene-completion** & static generation |
-| **Occ3D-Waymo** | 200×200×16 | 14 | large-scale forecasting / 4D generation |
-| **CarlaSC** | 128×128×8 | 10 | **synthetic, fully-dynamic** generation (clean motion) |
-| **NuPlan-Occ** (Scaling-Up) | nuScenes-style | — | **scale** (~19× more scenes) for occ-centric generation |
-| **Lyft-Occ** | — | — | cross-dataset forecasting |
-| **NYUv2** | 240×144×240 | indoor | OccScene's indoor text→occ |
+| [**Occ3D-nuScenes**](https://arxiv.org/abs/2304.14365) | 200×200×16 · 0.4 m · ±40 m | 17 (+free) | the main **forecasting & generation** bench |
+| [**nuScenes-Occupancy / OpenOccupancy**](https://arxiv.org/abs/2303.03991) | denser voxels | 16 | occ prediction, generation recon |
+| [**SemanticKITTI**](https://arxiv.org/abs/1904.01416) | 256×256×32 · 0.2 m | 19 | outdoor **scene-completion** & static generation |
+| [**Occ3D-Waymo**](https://arxiv.org/abs/2304.14365) | 200×200×16 | 14 | large-scale forecasting / 4D generation |
+| [**CarlaSC**](https://arxiv.org/abs/2203.07060) | 128×128×8 | 10 | **synthetic, fully-dynamic** generation (clean motion) |
+| [**NuPlan-Occ**](https://arxiv.org/abs/2510.22973) (Scaling-Up) | nuScenes-style | — | **scale** (~19× more scenes) for occ-centric generation |
+| [**Lyft-Occ**](https://arxiv.org/abs/2006.14480) | — | — | cross-dataset forecasting |
+| [**NYUv2**](https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html) | 240×144×240 | indoor | OccScene's indoor text→occ |
 
 **Paired language / scenario data** (for the language-control line) — the scarce resource:
-- **ProSim-Instruct-520k** — 10M+ text prompts over 520k real scenarios (the largest text↔scenario pairing). · **DIVA** (SimGen, 147.5 h) · **nuScenes-QA** (occ/scene VQA) · **OpenDV-2K** (1700 h driving video) · crash-report sets (CrashAgent).
+- [**ProSim-Instruct-520k**](https://arxiv.org/abs/2409.05863) — 10M+ text prompts over 520k real scenarios (the largest text↔scenario pairing). · [**DIVA**](https://arxiv.org/abs/2406.09386) (SimGen, 147.5 h) · [**nuScenes-QA**](https://arxiv.org/abs/2305.14836) (occ/scene VQA) · [**OpenDV-2K**](https://arxiv.org/abs/2403.09630) (1700 h driving video) · [crash-report sets](https://arxiv.org/abs/2505.18341) (CrashAgent).
 > ⚠️ **There is no large paired text↔occupancy dataset.** This single fact pushes language→occ methods toward *text → LLM → layout → occ* (no paired data needed) rather than direct text-conditioning — see the [mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port).
 
 ## Evaluation — what each metric answers, and its blind spot
@@ -175,10 +175,10 @@ One row per model, decomposed across the axes. Read a row to understand a method
 
 | Method | Mech. | 1s | 2s | 3s | **Avg mIoU** | FPS | Params |
 |---|---|---|---|---|---|---|---|
-| DOME '24 | clip-diffusion | 35.1 | 25.9 | 20.3 | 27.1 | 6.5 | 397M |
-| COME '25 | clip-diff + control | 42.8 | 33.0 | 27.0 | 34.2 | 0.3 | 692M |
-| I²-World '25 | token-AR (enc-dec) | 47.6 | 38.6 | 33.0 | 39.7 | 37 | 22.7M |
-| **GenieDrive '26** | VAE + AR + E2E | 50.5 | 41.5 | 35.8 | **42.6** | 41 | 3.5M |
+| [DOME '24](https://arxiv.org/abs/2410.10429) | clip-diffusion | 35.1 | 25.9 | 20.3 | 27.1 | 6.5 | 397M |
+| [COME '25](https://arxiv.org/abs/2506.13260) | clip-diff + control | 42.8 | 33.0 | 27.0 | 34.2 | 0.3 | 692M |
+| [I²-World '25](https://arxiv.org/abs/2507.09144) | token-AR (enc-dec) | 47.6 | 38.6 | 33.0 | 39.7 | 37 | 22.7M |
+| [**GenieDrive '26**](https://arxiv.org/abs/2512.12751) | VAE + AR + E2E | 50.5 | 41.5 | 35.8 | **42.6** | 41 | 3.5M |
 
 ⚠️ This aggregate is **static-dominated** — a model can top it while failing the movers that matter. See the [evaluation blind spots](#evaluation--what-each-metric-answers-and-its-blind-spot).
 
@@ -221,13 +221,13 @@ The empty cells, stated as falsifiable targets:
 **A. Anti-drift / long-horizon rollout** *(port: rollout schedules, memory, reference-frame anchoring).*
 - **GAIA-1** [[paper]](https://arxiv.org/abs/2309.17080) · **GAIA-2** [[paper]](https://arxiv.org/abs/2503.20523) — scaled generative driving world models; long, controllable rollouts.
 - **Vista** [[paper]](https://arxiv.org/abs/2405.17398) — high-fidelity, long-horizon, action-controllable; open-source.
-- **DrivingWorld** (video GPT) [[paper]](https://arxiv.org/abs/2412.19505) · **Epona / InfiniCube / Cosmos-Drive-Dreams** — long / infinite street-view generation.
-- **Wan** — open large-scale DiT video suite many anti-drift methods build on.
+- **DrivingWorld** (video GPT) [[paper]](https://arxiv.org/abs/2412.19505) · **Epona** [[paper]](https://arxiv.org/abs/2506.24113) · **InfiniCube** [[paper]](https://arxiv.org/abs/2412.03934) · **Cosmos-Drive-Dreams** [[paper]](https://arxiv.org/abs/2506.09042) — long / infinite / synthetic street-view generation.
+- **Wan** — open large-scale DiT video suite many anti-drift methods build on. [[paper]](https://arxiv.org/abs/2503.20314)
 
 **B. Multi-view spatial consistency** *(port: cross-view attention so 6 cameras / triplanes agree).*
 - **MagicDrive / MagicDrive-V2(DiT)** [[paper]](https://arxiv.org/abs/2411.13807) — BEV+box+text multi-view street view.
 - **Panacea** [[paper]](https://arxiv.org/abs/2311.16813) — panoramic multi-view video.
-- **Drive-WM** *CVPR'24* — masked multi-view prediction + image-reward trajectory selection.
+- **Drive-WM** — masked multi-view prediction + image-reward trajectory selection. *CVPR'24*. [[paper]](https://arxiv.org/abs/2311.17918)
 
 **C. Conditioning interfaces** *(port: how language/action/layout enter the denoiser).*
 - **DriveDreamer-2** [[paper]](https://arxiv.org/abs/2403.06845) — **LLM → trajectories → HDMap → video**; rare events + measured downstream gain (the template for text→layout→occ).
