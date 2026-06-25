@@ -21,7 +21,9 @@ Most lists are chronological dumps that tell you *what exists*. This one is buil
 **Part III · How the field is judged** — [Datasets](#datasets) · [Evaluation](#evaluation--what-each-metric-answers-and-its-blind-spot) · [Leaderboard](#leaderboard-read-honestly)
 
 **Part IV · What it's for & where it's going** — [Data engine & simulator](#occupancy-as-a-data-engine--simulator) · [Open frontiers](#open-frontiers)
+
 **Borrowing from neighbors** — [Video WMs](#video-driving-world-models--what-occ-borrows) · [Language→scenario mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port) · [LiDAR WMs](#lidar--point-cloud-world-models)
+
 [Surveys & lists](#surveys--other-lists)
 
 ---
