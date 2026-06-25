@@ -15,8 +15,11 @@ Most lists are chronological dumps that tell you *what exists*. This one is buil
 ## Contents
 
 **Part I · Framing** — [What & why](#what-is-an-occupancy-world-model--and-why) · [The cheat sheet](#the-cheat-sheet)
+
 **Part II · The design axes** — [1 Representation](#axis-1--representation) · [2 Mechanism](#axis-2--generative-mechanism) · [3 Conditioning & control](#axis-3--conditioning--control) · [4 Rollout & horizon](#axis-4--rollout-horizon--stability) · [5 Supervision & data](#axis-5--supervision--data-efficiency)
+
 **Part III · How the field is judged** — [Datasets](#datasets) · [Evaluation](#evaluation--what-each-metric-answers-and-its-blind-spot) · [Leaderboard](#leaderboard-read-honestly)
+
 **Part IV · What it's for & where it's going** — [Data engine & simulator](#occupancy-as-a-data-engine--simulator) · [Open frontiers](#open-frontiers)
 **Borrowing from neighbors** — [Video WMs](#video-driving-world-models--what-occ-borrows) · [Language→scenario mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port) · [LiDAR WMs](#lidar--point-cloud-world-models)
 [Surveys & lists](#surveys--other-lists)
