@@ -1,234 +1,270 @@
 # Awesome Occupancy World Models [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
-A curated, **direction-indexed** reading list for **occupancy (occ) world models** in autonomous driving.
+A curated, **axis-indexed** guide to **occupancy (occ) world models** for autonomous driving.
 
-Most existing lists are chronological dumps. This one is organized by **what problem each paper attacks**, so you can answer *"if I want to work on X, what should I read?"* directly. The taxonomy follows three battles every conditional generative field fights — **representation**, **mechanism**, and **long-horizon & measurement** — unfolded into six concrete directions plus the foundational backbone and adjacent fields.
+Most lists are chronological dumps that tell you *what exists*. This one is built to tell you *how to think about the field* — so you can place any paper, see the open cells, and design a new method. The spine is one idea:
 
-> **Scope.** Core = generative/forecasting world models in the 3D **occupancy** space. We also track the **video** and **LiDAR/point-cloud** world-model lines, because occ borrows machinery from both.
+> **An occupancy world model is a function `(history, condition) → future scene`.** Every paper is a set of choices on a handful of orthogonal **design axes** — representation, mechanism, conditioning, rollout, supervision — judged by a handful of **metrics**. Organize by the axes and the structure of the field falls out.
 
----
-## Overview Workflow
+<p align="center"><img src="assets/pipeline.svg" width="100%" alt="occ world model = (history, condition) → future scene, decomposed into design axes"></p>
 
-<img width="2720" height="1712" alt="occ_world_model_design_choices_with_gaussian" src="https://github.com/user-attachments/assets/432caace-9510-400b-a9de-39fc49b93160" />
-
-
+> **Scope.** Core = generative / forecasting world models in the 3D **occupancy** space. We also track the **video** and **LiDAR** world-model lines — not as a catalogue, but as **machinery occ borrows** (anti-drift rollout, multi-view rendering, language control). Each neighbor entry says *what to port*.
 
 ---
 
 ## Contents
- 
-- [The leaderboard (and how to read it honestly)](#the-leaderboard-and-how-to-read-it-honestly)
-- [Foundational occ world models](#foundational-occ-world-models)
-  - [A. Token-AR / GPT-style](#a-token-ar--gpt-style-generative) · [B. Diffusion](#b-diffusion-based-generative) · [C. Next-scale (VAR)](#c-next-scale-var--efficient-tokenization-generative) · [D. Vision-centric + planning](#d-vision-centric-forecasting--planning) · [E. Self-supervised / pretraining](#e-self-supervised--pretraining-world-models)
-- [Language-guided occupancy](#language-guided-occupancy)
-  - [A. Query — open-vocabulary perception](#a-query--open-vocabulary-perception)
-  - [B. VLA world models](#b-vla-world-models)
-  - [C. Text-conditioned generation & editing](#c-text-conditioned-generation--editing)
-  - [The open frontier](#the-open-frontier-language-as-mover-level-control)
-- [Related: video driving world models](#related-video-driving-world-models)
-- [Related: LiDAR / point-cloud world models](#related-lidar--point-cloud-world-models)
-- [Related: language-controlled scenario generation (mechanisms to borrow)](#related-language-controlled-scenario-generation-mechanisms-to-borrow)
-- [Related: generative data engine — does generated data actually help downstream?](#related-generative-data-engine--does-generated-data-actually-help-downstream)
-- [Surveys & other lists](#surveys--other-lists)
-- [Two caveats before you compare numbers](#two-caveats-before-you-compare-numbers)
+
+**Part I · Framing** — [What & why](#what-is-an-occupancy-world-model--and-why) · [The cheat sheet](#the-cheat-sheet)
+**Part II · The design axes** — [1 Representation](#axis-1--representation) · [2 Mechanism](#axis-2--generative-mechanism) · [3 Conditioning & control](#axis-3--conditioning--control) · [4 Rollout & horizon](#axis-4--rollout-horizon--stability) · [5 Supervision & data](#axis-5--supervision--data-efficiency)
+**Part III · How the field is judged** — [Datasets](#datasets) · [Evaluation](#evaluation--what-each-metric-answers-and-its-blind-spot) · [Leaderboard](#leaderboard-read-honestly)
+**Part IV · What it's for & where it's going** — [Data engine & simulator](#occupancy-as-a-data-engine--simulator) · [Open frontiers](#open-frontiers)
+**Borrowing from neighbors** — [Video WMs](#video-driving-world-models--what-occ-borrows) · [Language→scenario mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port) · [LiDAR WMs](#lidar--point-cloud-world-models)
+[Surveys & lists](#surveys--other-lists)
+
+---
 ---
 
-## The leaderboard (and how to read it honestly)
+# Part I · Framing
 
-4D occ forecasting on **Occ3D-nuScenes** (GT-occ input, 2s history → 3s future), as reported in the GenieDrive paper under one protocol:
+## What is an occupancy world model — and why
+
+A 3D **occupancy** grid is the cheapest representation that is *both* geometric (where stuff is) and semantic (what it is), sensor-agnostic, and dense. An **occupancy world model** learns to *roll it forward in time under control* — predict / generate the future occupancy given history and a condition (ego motion, an action, a layout, text).
+
+Why care, beyond a benchmark number: occupancy is the **editable physics layer** of an AD stack. A good occ world model is (i) a **forecaster** for end-to-end planning, (ii) a **simulator** you can drive and edit, and (iii) a **data engine** that manufactures sensor-grounded scenes — including the long-tail ones logs never contain. Whether any model actually delivers (ii)/(iii) is [largely unproven](#occupancy-as-a-data-engine--simulator) — which is where the open work is.
+
+## The cheat sheet
+
+One row per model, decomposed across the axes. Read a row to understand a method; read a column to see the menu of choices; scan for the empty cells to find your niche.
+
+| Model | Representation | Mechanism | Control (axis 3) | Supervision | Venue |
+|---|---|---|---|---|---|
+| **OccWorld** | VQ tokens | token-AR (GPT) | ego (joint) | GT occ | ECCV'24 |
+| **OccSora** | 4D tokenizer | diffusion (DiT) | trajectory | GT occ | arXiv'24 |
+| **DOME** | continuous VAE | diffusion (DiT) | ego-trajectory | GT occ | arXiv'24 |
+| **COME** | continuous VAE | diffusion + control | scene-centric forecast | GT occ | NeurIPS'25 |
+| **DynamicCity** | HexPlane | diffusion (DiT) | traj / command / layout | GT occ | ICLR'25 |
+| **UniScene** | occ-VAE | diffusion | **BEV layout** | GT occ | CVPR'25 |
+| **GenieDrive** | tri-plane VAE | AR + E2E | action (MCA) | GT occ | CVPR'26 |
+| **I²-World** | intra/inter VQ | token-AR (enc-dec) | scene-transform | GT occ | ICCV'25 |
+| **OccTENS** | next-scale tokens | next-scale AR | pose | GT occ | RA-L'26 |
+| **OccLLaMA** | VQ tokens | AR (LLM) | **language** (QA) + action | GT occ | arXiv'24 |
+| **X-Scene** | tri-plane VAE | diffusion | **text → layout** | GT occ | NeurIPS'25 |
+| **OccScene** | voxel + RGB | joint diffusion | **text** | GT occ | arXiv'24 |
+| **SemCity** | tri-plane | diffusion | unconditional / edit | GT occ | CVPR'24 |
+| **XCube** | sparse-voxel hierarchy | cascaded diffusion | uncond / weak text | shape/scene | CVPR'24 |
+| **Drive-OccWorld** | BEV | token-AR | action (vel/steer/cmd) | vision-centric | AAAI'25 |
+| **GaussianWorld** | 3D Gaussians | streaming update | sensor | vision-centric | CVPR'25 |
+| **UnO** | continuous field | — (occ field) | — | self-sup (LiDAR) | CVPR'24 |
+
+*Patterns to notice:* representation is trending **plane-factored** (triplane/hexplane) for efficiency; mechanism splits **AR (planning-friendly, fast)** vs **diffusion (fidelity, controllable)**; the **control** column climbs a ladder that runs out exactly at *language → per-agent behavior*; almost everything is supervised on **GT occ** — self-/vision-supervision is the minority.
+
+---
+---
+
+# Part II · The design axes
+
+## Axis 1 — Representation
+
+*How the dense `200×200×16` grid is compressed into something a generator can model. This choice dominates efficiency and fidelity.*
+
+- **Dense voxel / 3D-conv** — no compression; expensive. **OccGen** — Generative Multi-modal 3D Occupancy Prediction. *ECCV'24*. [[paper]](https://arxiv.org/abs/2404.15014) — diffusion "noise→occ" refinement from sensors.
+- **Discrete VQ tokens** — occupancy as a "language"; enables GPT-style AR. **OccWorld** [[paper]](https://arxiv.org/abs/2311.16038) · **OccLLaMA** [[paper]](https://arxiv.org/abs/2409.03272) · **I²-World** (intra-scene + inter-scene tokenizers) [[paper]](https://arxiv.org/abs/2507.09144).
+- **Continuous VAE latent** — smoother, diffusion-friendly. **DOME** [[paper]](https://arxiv.org/abs/2410.10429) — the continuous-latent diffusion baseline most follow-ups build on.
+- **Plane-factored (triplane / hexplane)** — the current efficiency winner. **SemCity** (triplane) [[paper]](https://arxiv.org/abs/2403.07773) · **GenieDrive** (tri-plane VAE, latent ~58% of prior) [[paper]](https://arxiv.org/abs/2512.12751) · **T³Former** (delta-triplane) [[paper]](https://arxiv.org/abs/2503.07338) · **DynamicCity** (HexPlane, 4D) [[paper]](https://arxiv.org/abs/2410.18084).
+- **Sparse-voxel hierarchy** — high-res large scenes. **XCube** (up to 1024³, VDB) [[paper]](https://arxiv.org/abs/2312.03806).
+- **3D Gaussians** — explicit, continuous motion. **GaussianWorld** [[paper]](https://arxiv.org/abs/2412.10373) — streaming occ via Gaussian updates.
+
+## Axis 2 — Generative mechanism
+
+*How the future is produced. The field's central fork: autoregression vs diffusion.*
+
+- **Token-AR / GPT-style** — next-token / next-scene; fast, plays well with planning, but autoregressive drift. **OccWorld** [[paper]](https://arxiv.org/abs/2311.16038) · **OccLLaMA** [[paper]](https://arxiv.org/abs/2409.03272) · **RenderWorld** [[paper]](https://arxiv.org/abs/2409.11356) · **I²-World** (real-time, 94.8 FPS) [[paper]](https://arxiv.org/abs/2507.09144).
+- **Latent diffusion / DiT** — high fidelity, naturally controllable, full-sequence; slow. **DOME** [[paper]](https://arxiv.org/abs/2410.10429) · **OccSora** [[paper]](https://arxiv.org/abs/2405.20337) · **UniScene** [[paper]](https://arxiv.org/abs/2412.05435) · **DynamicCity** [[paper]](https://arxiv.org/abs/2410.18084) · **SemCity** [[paper]](https://arxiv.org/abs/2403.07773) · **COME** [[paper]](https://arxiv.org/abs/2506.13260).
+- **Next-scale (VAR-style)** — coarse-to-fine; efficiency + long horizon. **OccTENS** (temporal next-scale) [[paper]](https://arxiv.org/abs/2509.03887) · **XCube** (cascaded) [[paper]](https://arxiv.org/abs/2312.03806) · **PDD** (pyramid discrete diffusion) [[paper]](https://arxiv.org/abs/2311.12085).
+- **Flow matching** — emerging, fast sampling. **Foundational LiDAR WM** (Swin-VAE + latent flow matching) [[paper]](https://arxiv.org/abs/2506.23434).
+- **VAE + AR + end-to-end** — the current Occ-board leader. **GenieDrive** (tri-plane VAE + Mutual Control Attention, jointly E2E) [[paper]](https://arxiv.org/abs/2512.12751).
+
+## Axis 3 — Conditioning & control
+
+*What steers the future — the axis that decides whether you have a "world model" or just a predictor. It is a ladder of increasing control, and the top rung is empty.*
+
+<p align="center"><img src="assets/control_ladder.svg" width="92%" alt="conditioning ladder: uncond → ego → action → layout → language → per-mover (open)"></p>
+
+**Rung 0 — Unconditional / edit-only.** **SemCity** [[paper]](https://arxiv.org/abs/2403.07773) · **PDD** [[paper]](https://arxiv.org/abs/2311.12085) · **XCube** [[paper]](https://arxiv.org/abs/2312.03806).
+**Rung 1 — Ego pose / trajectory.** **DOME** (trajectory-resampling) [[paper]](https://arxiv.org/abs/2410.10429) · **OccSora** (trajectory prompt) [[paper]](https://arxiv.org/abs/2405.20337) · **OccWorld** (joint ego) [[paper]](https://arxiv.org/abs/2311.16038).
+**Rung 2 — Action (velocity / steer / command).** **Drive-OccWorld** (semantic/motion-conditional norm) [[paper]](https://arxiv.org/abs/2408.14197) · **GenieDrive** (Mutual Control Attention) [[paper]](https://arxiv.org/abs/2512.12751) · **DynamicCity** (command) [[paper]](https://arxiv.org/abs/2410.18084).
+**Rung 3 — BEV layout / scene graph.** **UniScene** (layout→occ→video/LiDAR) [[paper]](https://arxiv.org/abs/2412.05435) · **Scaling-Up Occ-centric Generation** (+ NuPlan-Occ) [[paper]](https://arxiv.org/abs/2510.22973).
+
+**Rung 4 — Language.** Three distinct sub-problems — keep them apart:
+- *Query (open-vocab perception)* — language is a **test-time probe** over occ features; single-frame, no control. **OVO** [[paper]](https://arxiv.org/abs/2305.16133) · **POP-3D** [[paper]](https://arxiv.org/abs/2401.09413) · **VEON** [[paper]](https://arxiv.org/abs/2407.12294) · **LOC** [[paper]](https://arxiv.org/abs/2510.22141) · **OccNeRF** [[paper]](https://arxiv.org/abs/2312.09243).
+- *VLA world models* — language is **one token type** alongside occ + action; weakly steering. **OccLLaMA** [[paper]](https://arxiv.org/abs/2409.03272) · **Occ-LLM** [[paper]](https://arxiv.org/abs/2502.06419) · **SparseOccVLA** [[paper]](https://arxiv.org/abs/2601.06474). ⚠️ *None of these is a text→occ generator — language conditions QA/planning; occ is forecast from past occ + action.*
+- *Text-conditioned generation & editing* — text is a **generation condition**. The only two genuine text→occ works:
+  - **OccScene** [[paper]](https://arxiv.org/abs/2412.11183) — pure text → occ + RGB (joint diffusion, perception↔generation mutual learning); controls *appearance*. Eval on SemanticKITTI / NuScenes-Occ / NYUv2.
+  - **X-Scene** [[paper]](https://arxiv.org/abs/2506.13558) · [[project]](https://x-scene.github.io/) — text → (RAG + GPT-4o → BEV layout) → triplane occ → image/video/3DGS. Occ3D-nuScenes occ-gen FID3D 258.8 (vs UniScene 529.6); Real+Gen downstream 3DOD mAP 39.9. ⚠️ **closest competitor** — but long-tail only *claimed*, downstream only *aggregate*, editing only qualitative, no per-agent / collision control, closed-vocabulary.
+  - Also: **HorizonWeaver** (multi-level semantic editing) [[paper]](https://arxiv.org/abs/2604.04887) · **VLA-World** (traj/direction-conditioned) [[paper]](https://arxiv.org/abs/2604.09059).
+
+**Rung 5 — Per-mover behavior · OPEN FRONTIER.** Natural language that steers the future *behavior of individual agents* — *"the left car cuts in", "the pedestrian crosses"* — with the occ world model rolling out a physically consistent future. **No occ method does this.** Query never touches dynamics; VLA treats language as a co-token; text-gen conditions scene *appearance*, not per-mover *behavior over time*. This is the language interface to the per-mover-control problem — see [Open frontiers](#open-frontiers).
+
+> **Borrowing the wiring.** Occ has adopted almost none of the language-control machinery developed for trajectories/video. The transferable mechanisms are catalogued in [Language→scenario mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port).
+
+## Axis 4 — Rollout, horizon & stability
+
+*A world model is used autoregressively, so single-step quality is not enough — error compounds and movers blur/drift. This is the battle occ borrows the most from video.*
+
+- **COME** — Scene-Centric Forecasting Control. *NeurIPS'25*. [[paper]](https://arxiv.org/abs/2506.13260) — factors ego-motion out via scene-centric coordinates; injects a forecast as control into a frozen DOME to cut drift.
+- **OccTENS** — temporal next-scale prediction for pose-controllable **long-term** generation. [[paper]](https://arxiv.org/abs/2509.03887)
+- **DFIT-OccWorld** — decoupled dynamic flow: warp static, predict dynamic; non-autoregressive. [[paper]](https://arxiv.org/abs/2412.13772)
+- **IR-WM** — predict the **residual** world change rather than the full next state. [[paper]](https://arxiv.org/abs/2510.16729)
+- **GenieDrive** — rolls out to 20 s; still degrades gracefully but movers fade fastest. [[paper]](https://arxiv.org/abs/2512.12751)
+- *The anti-drift toolbox itself lives in [video world models](#video-driving-world-models--what-occ-borrows).*
+
+## Axis 5 — Supervision & data efficiency
+
+*What you train on. The expensive default is dense GT occ; the interesting lines learn from raw sensors.*
+
+- **GT occ labels** — the default for every generator above.
+- **Self-supervised from LiDAR / point clouds** — no dense occ labels. **UnO** (continuous 4D occ field) [[paper]](https://arxiv.org/abs/2406.08691) · **ViDAR** (visual point-cloud forecasting pretraining) [[paper]](https://arxiv.org/abs/2312.17655) · **4D-Occ-Forecasting** [[paper]](https://arxiv.org/abs/2310.11239) · **UniWorld** [[paper]](https://arxiv.org/abs/2308.07234).
+- **Vision-centric (RGB in)** — deployable, no occ at inference. **Drive-OccWorld** [[paper]](https://arxiv.org/abs/2408.14197) · **PreWorld** (2D-render supervision) [[paper]](https://arxiv.org/abs/2502.07309) · **OccProphet** (camera-only, efficient) [[paper]](https://arxiv.org/abs/2502.15180) · **RenderWorld** (Gaussian self-supervised label) [[paper]](https://arxiv.org/abs/2409.11356).
+- **Pretraining / pretext** — occ forecasting as representation learning. **DriveWorld** *CVPR'24* · **UniWorld** [[paper]](https://arxiv.org/abs/2308.07234) · **Occupancy World Model for Robots** [[paper]](https://arxiv.org/abs/2505.05512).
+
+---
+---
+
+# Part III · How the field is judged
+
+## Datasets
+
+*What data exists, and what each is actually used for. Occ3D-nuScenes is the de-facto driving bench; the rest fill gaps (outdoor SSC, synthetic dynamics, scale, indoor).*
+
+| Dataset | Grid / range | Classes | Used for |
+|---|---|---|---|
+| **Occ3D-nuScenes** | 200×200×16 · 0.4 m · ±40 m | 17 (+free) | the main **forecasting & generation** bench |
+| **nuScenes-Occupancy / OpenOccupancy** | denser voxels | 16 | occ prediction, generation recon |
+| **SemanticKITTI** | 256×256×32 · 0.2 m | 19 | outdoor **scene-completion** & static generation |
+| **Occ3D-Waymo** | 200×200×16 | 14 | large-scale forecasting / 4D generation |
+| **CarlaSC** | 128×128×8 | 10 | **synthetic, fully-dynamic** generation (clean motion) |
+| **NuPlan-Occ** (Scaling-Up) | nuScenes-style | — | **scale** (~19× more scenes) for occ-centric generation |
+| **Lyft-Occ** | — | — | cross-dataset forecasting |
+| **NYUv2** | 240×144×240 | indoor | OccScene's indoor text→occ |
+
+**Paired language / scenario data** (for the language-control line) — the scarce resource:
+- **ProSim-Instruct-520k** — 10M+ text prompts over 520k real scenarios (the largest text↔scenario pairing). · **DIVA** (SimGen, 147.5 h) · **nuScenes-QA** (occ/scene VQA) · **OpenDV-2K** (1700 h driving video) · crash-report sets (CrashAgent).
+> ⚠️ **There is no large paired text↔occupancy dataset.** This single fact pushes language→occ methods toward *text → LLM → layout → occ* (no paired data needed) rather than direct text-conditioning — see the [mechanisms](#language-controlled-scenario-generation--four-mechanisms-to-port).
+
+## Evaluation — what each metric answers, and its blind spot
+
+*Pick the metric for the question you're actually asking. Most disputes come from reporting one and claiming another.*
+
+| Metric | Answers | Blind spot | Use when |
+|---|---|---|---|
+| **Recon IoU / mIoU** | is the **tokenizer/VAE** faithful? | says nothing about generation | reporting compression quality (don't conflate with gen) |
+| **Forecasting mIoU/IoU × horizon** | how good is **prediction** over time? | **static-dominated** (movers swamped); **ego-confound** | forecasting; always give a dynamic×horizon breakdown |
+| **FID / FID3D / FVD / KID** | is the output **distributionally realistic**? | a good *replayer* scores high; ≠ usefulness or control | comparing generative fidelity |
+| **F3D / Precision–Recall / MMD / JSD / 1-NNA** | fidelity **vs diversity** of generated scenes | insensitive to per-instance correctness | generation diversity studies |
+| **Controllability (detector-on-generated mAP, layout/text adherence)** | does the output **obey the condition**? | measured on **replayed** val, not counterfactual content | controllable-generation claims |
+| **Downstream (det mAP/NDS, seg mIoU, planning L2/collision)** | is the generated data **actually useful**? | usually **aggregate**, not a rare slice; train-budget confound | data-engine claims — the one that matters |
+
+**Three honesty rules** (they invalidate a lot of head-to-head claims):
+1. **Ego confound** — diffusion leaders often consume **GT ego-trajectory**; AR methods *predict* it. Not apples-to-apples; state the regime per row.
+2. **Regime mismatch** — vision-centric (RGB-in, e.g. GaussianWorld/GEM) vs GT-occ-token models are **not the same race**; never put them in one column.
+3. **Aggregate mIoU is static-dominated** — background voxels dominate the count; mover accuracy at horizon is the unsolved thing. Prefer dynamic×horizon.
+
+## Leaderboard (read honestly)
+
+4D occ forecasting on **Occ3D-nuScenes** (GT-occ input, 2 s history → 3 s future), one protocol as reported in the GenieDrive paper:
 
 | Method | Mech. | 1s | 2s | 3s | **Avg mIoU** | FPS | Params |
 |---|---|---|---|---|---|---|---|
 | DOME '24 | clip-diffusion | 35.1 | 25.9 | 20.3 | 27.1 | 6.5 | 397M |
 | COME '25 | clip-diff + control | 42.8 | 33.0 | 27.0 | 34.2 | 0.3 | 692M |
-| I²-World '25 | token-AR (encoder-decoder) | 47.6 | 38.6 | 33.0 | 39.7 | 37 | 22.7M |
+| I²-World '25 | token-AR (enc-dec) | 47.6 | 38.6 | 33.0 | 39.7 | 37 | 22.7M |
 | **GenieDrive '26** | VAE + AR + E2E | 50.5 | 41.5 | 35.8 | **42.6** | 41 | 3.5M |
 
-⚠️ The aggregate mIoU is **static-dominated**: background voxels swamp the moving agents. A model can top this table while failing the dynamic objects that matter most. See [Two caveats](#two-caveats-before-you-compare-numbers).
+⚠️ This aggregate is **static-dominated** — a model can top it while failing the movers that matter. See the [evaluation blind spots](#evaluation--what-each-metric-answers-and-its-blind-spot).
 
 ---
-
-## Foundational occ world models
-
-The canonical generative/forecasting backbone, grouped by paradigm. This is the master list; the Direction sections below re-slice these by research axis.
-
-### A. Token-AR / GPT-style generative
-
-- **OccWorld** — Learning a 3D Occupancy World Model for Autonomous Driving. *ECCV'24*. [[paper]](https://arxiv.org/abs/2311.16038) · [[code]](https://github.com/wzzheng/OccWorld) — GPT-style token-AR; jointly forecasts scene evolution + ego trajectory. The seed of the field.
-- **OccLLaMA** — An Occupancy-Language-Action Generative World Model. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.03272) — folds occupancy + language + action into one autoregressive vocabulary.
-- **Occ-LLM** — Enhancing Autonomous Driving with Occupancy-Based LLMs. *CVPR'25*. [[paper]](https://arxiv.org/abs/2502.06419) — couples an LLM with occupancy for forecasting + reasoning.
-- **RenderWorld** — World Model with Self-Supervised 3D Label. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.11356) — separate air / non-air grid tokenization for fine-grained 3D modeling.
-
-### B. Diffusion-based generative
-
-- **OccSora** — 4D Occupancy Generation Models as World Simulators. *arXiv'24*. [[paper]](https://arxiv.org/abs/2405.20337) · [[code]](https://github.com/wzzheng/OccSora) — 4D scene tokenizer + DiT; predicts occ evolution given arbitrary trajectories.
-- **DOME** — Taming Diffusion into a High-Fidelity Controllable Occupancy World Model. *arXiv'24*. [[paper]](https://arxiv.org/abs/2410.10429) — continuous Occ-VAE + spatio-temporal diffusion transformer; the diffusion baseline most follow-ups build on.
-- **COME** — Adding Scene-Centric Forecasting Control to Occupancy World Model. *NeurIPS'25*. [[paper]](https://arxiv.org/abs/2506.13260) — factors ego-motion out via scene-centric coordinates, injects a scene-centric forecast as control into a frozen DOME. Opened the "explicit-injection" line.
-- **UniScene** — Unified Occupancy-centric Driving Scene Generation. *CVPR'25*. [[paper]](https://arxiv.org/abs/2412.05435) — one occ-centric hierarchy generating occ + multi-view video + LiDAR; occ-DiT first, then Gaussian-rendered guidance.
-- **GenieDrive** — Towards Physics-Aware Driving World Model with 4D Occupancy Guided Video Generation. *CVPR'26*. [[paper]](https://arxiv.org/abs/2512.12751) — tri-plane VAE + Mutual Control Attention + end-to-end training; current top of the Occ board, then renders occ → multi-view video.
-
-### C. Next-scale (VAR) / efficient-tokenization generative
-
-- **I²-World** — Intra-Inter Tokenization for Efficient Dynamic 4D Scene Forecasting. *ICCV'25*. [[paper]](https://arxiv.org/abs/2507.09144) — decouples intra-scene (multi-scale residual VQ) and inter-scene (temporal) tokenizers; encoder-decoder, real-time.
-- **OccTENS** — 3D Occupancy World Model via Temporal Next-Scale Prediction. *RA-L'26*. [[paper]]([https://arxiv.org/abs/2509.03887](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=11358403)) — decomposes into spatial scale-by-scale + temporal scene-by-scene; pose-controllable long-term generation.
-- **T³Former** — Delta-Triplane Transformers as Occupancy World Models. *arXiv'25*. [[paper]](https://arxiv.org/abs/2503.07338) — pretrained triplanes + multi-scale transformers; predicts *triplane changes* for forecasting + planning, real-time.
-- **Foundational LiDAR World Models (Swin-VAE + Latent Flow Matching)** — Liu et al. *nips'25*. [[paper]](https://arxiv.org/abs/2506.23434) — high-ratio Swin-Transformer VAE + latent flow matching; strong semantic-occ forecasting
-
-### D. Vision-centric forecasting + planning
-
-- **Drive-OccWorld** — Vision-Centric 4D Occupancy Forecasting and Planning via World Models. *AAAI'25 (Oral)*. [[paper]](https://arxiv.org/abs/2408.14197) · [[code]](https://github.com/yuyang-cloud/Drive-OccWorld) — action-conditioned occ + flow forecasting wired directly into an end-to-end planner.
-- **DFIT-OccWorld** — Efficient Occupancy World Model via Decoupled Dynamic Flow + Image-Assisted Training. *arXiv'24*. [[paper]](https://arxiv.org/abs/2412.13772) — decoupled dynamic flow; non-autoregressive, warp static + predict dynamic.
-- **OccProphet** — Pushing the Efficiency Frontier of Camera-Only 4D Occupancy Forecasting. *ICLR'25*. [[paper]](https://arxiv.org/abs/2502.15180) — Observer–Forecaster–Refiner framework; lightweight, camera-only.
-- **PreWorld** — Semi-Supervised Vision-Centric 3D Occupancy World Model. *ICLR'25*. [[paper]](https://arxiv.org/abs/2502.07309) — 2D-render supervision (RGB / density / semantic) + state-conditioned forecasting, end-to-end from images.
-- **IR-WM** — Vision-Centric 4D Occupancy Forecasting and Planning via Implicit Residual World Models. *arXiv'25*. [[paper]](https://arxiv.org/abs/2510.16729) — predicts residual world change rather than the full next state.
-- **NeMo** — Neural Volumetric World Models for Autonomous Driving. *ECCV'24*. — volumetric WM with image-prediction + motion-flow modules for planning.
-
-### E. Self-supervised / pretraining world models
-
-*Occupancy forecasting as a pretext task — learn from raw LiDAR/video without dense occ labels.*
-
-- **UnO** — Unsupervised Occupancy Fields for Perception and Forecasting. *CVPR'24*. [[paper]](https://arxiv.org/abs/2406.08691) — continuous 4D occupancy field, self-supervised from LiDAR (pos/neg sampling); strong transfer + high mover recall.
-- **ViDAR** — Visual Point Cloud Forecasting enables Scalable Autonomous Driving. *CVPR'24*. [[paper]](https://arxiv.org/abs/2312.17655) — history encoder + latent rendering + future decoder; pretrains visual encoders by forecasting point clouds.
-- **4D-Occ-Forecasting** — Self-supervised via future point clouds + differentiable depth rendering. *CVPR'23*. [[paper]](https://arxiv.org/abs/2310.11239) — future point clouds as a proxy for future occ.
-- **UniWorld** — Autonomous Driving Pre-training via World Models. *arXiv'23*. [[paper]](https://arxiv.org/abs/2308.07234) — multi-frame point-cloud fusion for 4D occ-reconstruction pretraining.
-- **DriveWorld** — 4D Pre-trained Scene Understanding via World Models. *CVPR'24*. — memory-augmented spatio-temporal pretraining for downstream planning.
-- **Occupancy World Model for Robots** — *arXiv'25*. [[paper]](https://arxiv.org/abs/2505.05512) — carries the occ-WM recipe beyond driving into robotics.
-
 ---
 
-<img width="2920" height="1536" alt="language_guided_occupancy_three_paradigms" src="https://github.com/user-attachments/assets/26630008-dca3-4659-8a71-32e1184a7998" />
+# Part IV · What it's for, and where it's going
 
- 
-## Language-guided occupancy
- 
-"Language + occupancy" is really **three different problems**, separated by *where language enters* the pipeline. Keep them apart — conflating them is the fastest way to a confused contribution.
- 
-### A. Query — open-vocabulary perception
- 
-*Language is a **test-time probe**: CLIP-aligned voxel features let you segment / retrieve occupancy by free-form text. Single-frame; no time, no control. The mature, crowded lane.*
- 
-- **OVO** — Open-Vocabulary Occupancy. *arXiv'23*. [[paper]](https://arxiv.org/abs/2305.16133) — distills a 2D open-vocab segmentor into the 3D occ network; simple, model-agnostic.
-- **POP-3D** — Open-Vocabulary 3D Occupancy Prediction from Images. *NeurIPS'23*. [[paper]](https://arxiv.org/abs/2401.09413) · [[project]](https://vobecant.github.io/POP3D/) — 2D-3D encoder + occ head + 3D-language head; tri-modal (image / language / LiDAR) self-supervised; camera-only at inference.
-- **VEON** — Vocabulary-Enhanced Occupancy Prediction. *ECCV'24*. [[paper]](https://arxiv.org/abs/2407.12294) — assembles + adapts MiDaS + CLIP (LoRA, side-adaptor); 46M params, zero manual labels.
-- **LOC** — A General Language-Guided Framework for Open-Set 3D Occupancy Prediction. *arXiv'25*. [[paper]](https://arxiv.org/abs/2510.22141) — language-guided framework prioritizing segmentation quality, not just classification.
-- *Also (render-based / CLIP-pseudo-label variants of the same idea):* OccNeRF [[paper]](https://arxiv.org/abs/2312.09243), LangOcc, DistillNeRF, OccCLIP, LOcc, CAL.
-### B. VLA world models
- 
-*Language is **one token type in a unified vocabulary** alongside occ and action; an LLM co-generates future occ + text + action. Weakly steering — language is a co-modality, not a fine-grained controller of dynamics.*
- 
-- **OccLLaMA** — An Occupancy-Language-Action Generative World Model. *arXiv'24*. [[paper]](https://arxiv.org/abs/2409.03272) — VQVAE occ tokens + language tokens + ego-action tokens → one vocabulary; fine-tuned LLaMA does next-token / next-scene for forecasting + planning + VQA.
-- **Occ-LLM** — Enhancing Autonomous Driving with Occupancy-Based LLMs. *ICRA'25*. [[paper]](https://arxiv.org/abs/2502.06419) — couples an LLM with occupancy for forecasting + reasoning.
-- **SparseOccVLA** — Bridging Occupancy and Vision-Language Models via Sparse Queries. *arXiv'26*. [[paper]](https://arxiv.org/abs/2601.06474) — sparse-query bridge for unified 4D scene understanding + planning. ⚠️ recent neighbor — differentiate against it.
-### C. Text-conditioned generation & editing
- 
-*Language is a **generation condition**: text → occ scene generation or semantic editing. Mostly scene appearance / layout ("rainy, dense"), not mover behavior over time.*
- 
-- **OccScene** — Semantic Occupancy-based Cross-task Mutual Learning for 3D Scene Generation. *arXiv'24 (TPAMI under review)*. [[paper]](https://arxiv.org/abs/2412.11183) — the only **pure text → occ** generator (joint occ + RGB diffusion, perception↔generation mutual learning, no GT layout at inference). Eval on SemanticKITTI / NuScenes-Occupancy / NYUv2; 3D-scene-gen FID 39.21 (vs SemCity 56.55) + a downstream perception mIoU boost. Controls scene *appearance*, not rare layouts.
-- **X-Scene** — Large-Scale Driving Scene Generation with Multi-Granular Control. *NeurIPS'25*. [[paper]](https://arxiv.org/abs/2506.13558) · [[project]](https://x-scene.github.io/) — strongest **text → (RAG + GPT-4o → BEV layout) → triplane-VAE occ → image / video → 3DGS** cascade (layout = additive cond, box + text = cross-attn). Eval on Occ3D-nuScenes: occ-gen FID3D 258.8 (vs UniScene 529.6), Real+Gen downstream 3DOD mAP 39.9 (best synthetic augmenter). ⚠️ **the closest competitor for text→occ** — but long-tail only *claimed* (no corner-case experiment), downstream only *aggregate* (no rare slice), editing only qualitative, no per-agent behavior / collision constraint, closed-vocabulary + nuScenes-bounded RAG.
-- **UniScene** — Unified Occupancy-centric Driving Scene Generation. *CVPR'25*. [[paper]](https://arxiv.org/abs/2412.05435) — occ-centric hierarchy; conditionable generation across occ / video / LiDAR. Control is **BEV layout**, not text (text only in its video stage).
-- **HorizonWeaver** — Generalizable Multi-Level Semantic Editing for Driving Scenes. *arXiv'26*. [[paper]](https://arxiv.org/abs/2604.04887) — text-guided multi-level semantic scene editing.
-- **Scaling Up Occupancy-centric Driving Scene Generation** — Dataset and Method. *arXiv'25*. [[paper]](https://arxiv.org/abs/2510.22973) — dataset + method for occ-centric controllable scene generation.
-- **VLA-World** — Learning Vision-Language-Action World Models for Autonomous Driving. *arXiv'26*. [[paper]](https://arxiv.org/abs/2604.09059) — trajectory / direction-conditioned generation of the near-future scene. ⚠️ recent neighbor.
+## Occupancy as a data engine & simulator
 
-> **Evaluation protocol for text→occ** (to sit next to X-Scene / UniScene / DynamicCity / OccSora in one table): dataset = **Occ3D-nuScenes** (200×200×16). Report (1) VAE recon **IoU + mIoU**; (2) occ-gen **FID3D / F3D / KID / Precision–Recall** (DynamicCity protocol, both 11- & 17-class); (3) occ-gen **mIoU** (UniScene protocol; number to beat ≈ **20.5**); (4) optional downstream occ-pred / 3DOD / UniAD-planning. ⚠️ No shared head-to-head benchmark exists — every paper reports a different dataset×metric mix, so a clean protocol is itself a contribution.
-
-### The open frontier: language as mover-level control
- 
-All three lanes above leave the **same cell empty**: natural language that steers the future *behavior of individual movers*, with the occupancy world model rolling out a physically consistent future — *"the left car cuts in"*, *"the pedestrian crosses"*. Open because:
- 
-- **A** never touches dynamics (query only).
-- **B** treats language as a co-generated token, not a per-agent controller.
-- **C** conditions scene *appearance*, not per-mover *behavior over time*.
-This is the language interface to the **per-mover-control** problem — and it is distinct from the trajectory / instruction level of SparseOccVLA and VLA-World, which steer the *ego*, not each agent.
-
-**A second empty cell — validated long-tail usefulness.** Even the works that *do* condition occ generation (UniScene, X-Scene) validate only on **aggregate** downstream metrics; none proves a gain on a **held-out rare slice**. A *prior-driven, language-controlled occupancy generator that targets safety-critical scenes and proves a downstream gain on a rare slice* does not exist — see [Related: generative data engine](#related-generative-data-engine--does-generated-data-actually-help-downstream).
- 
----
- 
-## Related: video driving world models
- 
-The source of the anti-drift machinery and the multi-view rendering stage.
- 
-- **GAIA-1** — A Generative World Model for Autonomous Driving. *arXiv'23*. [[paper]](https://arxiv.org/abs/2309.17080)
-- **GAIA-2** — Controllable Multi-View Generative World Model. *arXiv'25*. [[paper]](https://arxiv.org/abs/2503.20523)
-- **DriveDreamer** — Real-world-driven World Models. *ECCV'24*. [[paper]](https://arxiv.org/abs/2309.09777)
-- **Vista** — Generalizable Driving World Model, High Fidelity + Controllability. *NeurIPS'24*. [[paper]](https://arxiv.org/abs/2405.17398)
-- **Drive-WM** — Multi-View World Model for end-to-end planning. *CVPR'24*. — masked multi-view prediction; image-reward trajectory selection.
-- **DrivingWorld** — World Model via Video GPT. *arXiv'24*. [[paper]](https://arxiv.org/abs/2412.19505)
-- **GenAD / WoVoGen / MagicDrive(-V2) / Epona / InfiniCube / Cosmos-Drive-Dreams** — controllable / multi-view / long-horizon street-view generation (various venues; see the lists below).
-- **Wan** — Open and Advanced Large-Scale Video Generative Models. *Alibaba '25*. — the open DiT video suite many anti-drift methods build on.
----
- 
-## Related: LiDAR / point-cloud world models
- 
-- **Copilot4D** — discrete diffusion LiDAR world model. *ICLR'24*. [[paper]](https://arxiv.org/abs/2311.01017)
-- **ViDAR** — visual point-cloud forecasting for scalable AD. *CVPR'24*.
-- **DynamicCity** — Large-Scale LiDAR Generation from Dynamic Scenes. *ICLR'25 (Spotlight)*.
-- **LidarDM** — Generative LiDAR Simulation in a Generated World. *ICRA'25*. [[paper]](https://arxiv.org/abs/2404.02903)
-- **Foundational LiDAR World Models (Latent Flow Matching)** — *arXiv'25*. [[paper]](https://arxiv.org/abs/2506.23434)
----
- 
-## Related: language-controlled scenario generation (mechanisms to borrow)
-
-*How language is actually wired into generation — at the trajectory / BEV / video level. Occ has adopted almost none of these; this is the menu to port to occupancy. Four mechanisms:*
-
-**A. LLM emits a structured intermediate, a learned model renders it** *(dominant & the most portable to occ: text → layout/boxes → frozen occ generator; decouples semantics from the generative prior).*
-- **LCTGen** — Language-Conditioned Traffic Generation. *CoRL'23*. [[paper]](https://arxiv.org/abs/2307.07947) — text → GPT-4 → integer scene-vector → transformer generator.
-- **InteractTraj** — Language-Driven Interactive Traffic Trajectory Generation. *NeurIPS'24*. [[paper]](https://arxiv.org/abs/2405.15388) — text → interaction-code (follow / yield / cut-in) → trajectories.
-- **DriveDreamer-2** — LLM-Enhanced World Models for Diverse Driving Video. *AAAI'25*. [[paper]](https://arxiv.org/abs/2403.06845) — text → LLM trajectories → HDMap → multi-view video; rare events + a **measured** downstream det gain.
-- **Text2Street** — Controllable Text-to-Image for Street Views. *ICPR'24*. [[paper]](https://arxiv.org/abs/2402.04504) — text → road-topology + bbox layout → image.
-
-**B. LLM emits a guidance loss as code; test-time-guide a diffusion sampler** *(no paired text data; naturally adversarial / long-tail).*
-- **CTG++** — Language-Guided Traffic Simulation via Scene-Level Diffusion. *CoRL'23*. [[paper]](https://arxiv.org/abs/2306.06344) — GPT-4 writes a differentiable loss → guides trajectory diffusion.
-- **LD-Scene** — LLM-Guided Diffusion for Adversarial Safety-Critical Scenarios. *arXiv'25*. [[paper]](https://arxiv.org/abs/2505.11247) — CTG++ + code-debugger + unit-test hardening.
-
-**C. Direct conditioning (cross-attn / prompt embeddings)** *(cleanest end-to-end; needs paired text↔scene data).*
-- **ProSim** — Promptable Closed-loop Traffic Simulation. *NeurIPS'24*. [[paper]](https://arxiv.org/abs/2409.05863) — per-agent multimodal/text prompts; closed-loop; ships **520k** text↔scenario pairs (the most portable paired asset).
-- **SimGen** — Simulator-conditioned Driving Scene Generation. *NeurIPS'24*. [[paper]](https://arxiv.org/abs/2406.09386) — text + simulator layout → cascade diffusion image.
-
-**D. LLM-as-agent driving a tool / edit pipeline** *(flexible editing / report-grounded; heavyweight; bounded by underlying assets).*
-- **ChatSim** — Editable Scene Simulation via Collaborative LLM-Agents. *CVPR'24*. [[paper]](https://arxiv.org/abs/2402.05746) — role-specialized LLM agents place / edit assets in a NeRF.
-- **CrashAgent** — Crash Scenario Generation via Multi-modal Reasoning. *arXiv'25*. [[paper]](https://arxiv.org/abs/2505.18341) — crash reports + diagrams → simulation-ready scenarios.
-- **Seeking to Collide** — Online Safety-Critical Generation w/ Retrieval-Augmented LLMs. *ITSC'25*. [[paper]](https://arxiv.org/abs/2505.00972) — LLM intent inference + retrieval bank → adversarial agents.
-- **AGENTS-LLM** — Agentic LLM Augmentation of Challenging Scenarios. *arXiv'25*. [[paper]](https://arxiv.org/abs/2507.13729) — NL-instructed edits that stress SOTA planners.
-
----
-
-## Related: generative data engine — does generated data actually help downstream?
-
-*The honest scoreboard for "world model as a long-tail data source." Separate **closes the loop** (trains a downstream model on generated data, reports real-task gains) from **realism-only** (FVD/FID, or a pretrained detector run on replayed frames). Almost all positive results are **in-distribution camera-video augmentation** (+1–4 mAP/NDS); long-tail is usually **claimed, rarely measured on a held-out rare slice**.*
+*The honest scoreboard for "world model as a long-tail data source." Separate **closes the loop** (trains a downstream model on generated data, reports real gains) from **realism-only** (FID/FVD, or a pretrained detector on replayed frames). Almost all positive results are **in-distribution camera-video augmentation** (+1–4 mAP/NDS); long-tail is usually **claimed, rarely measured on a held-out rare slice**.*
 
 **Closes the loop (real downstream numbers):**
-- **Delphi** — Controllable Long Video Generation for E2E AD. *arXiv'24*. [[paper]](https://arxiv.org/abs/2406.01349) — **VLM failure-mining**: GPT-4 attributes UniAD failures → generate similar data; **972 samples (4%) → collision 0.34→0.27 (~25% rel.)**. Closest to a true long-tail engine.
-- **SubjectDrive** — Scaling Generative Data via Subject Control. *ECCV'24*. [[paper]](https://arxiv.org/abs/2403.19438) — StreamPETR **+3.6 mAP / +3.3 NDS**; key finding: *diversity, not volume, scales*.
-- **MagicDrive** — Street View Generation with 3D Geometry Control. *ICLR'24*. [[paper]](https://arxiv.org/abs/2310.02601) — BEVFusion **+2.52 mAP / +1.95 NDS**.
-- **Panacea / Panacea+** — Panoramic & Controllable Video. *CVPR'24*. [[paper]](https://arxiv.org/abs/2311.16813) — StreamPETR **+2.6 mAP / +2.3 NDS** (+AMOTA / lane in Panacea+).
-- **DrivingDiffusion** — Layout-Guided Multi-View Video. *ECCV'24*. [[paper]](https://arxiv.org/abs/2310.07771) — det **NDS 0.412 → 0.434**.
-- **WoVoGen** — World Volume-aware Multi-camera Generation. *ECCV'24*. [[paper]](https://arxiv.org/abs/2312.02934) — BEVDet **+1.3 mAP** (narrow, cars/trucks/buses).
-- **UniScene** — *CVPR'25*. [[paper]](https://arxiv.org/abs/2412.05435) — the **only occ generator that closes the loop**: occ **+8.5 mIoU**, det **+3.13 mAP / +2.61 NDS**. But occ is GT/layout-derived; long-tail only qualitative.
+- **Delphi** [[paper]](https://arxiv.org/abs/2406.01349) — VLM **failure-mining**: GPT-4 attributes UniAD failures → generate similar data; **972 samples (4%) → collision 0.34→0.27 (~25% rel.)**. Closest to a true long-tail engine.
+- **SubjectDrive** [[paper]](https://arxiv.org/abs/2403.19438) — StreamPETR **+3.6 mAP / +3.3 NDS**; *diversity, not volume, scales*.
+- **MagicDrive** [[paper]](https://arxiv.org/abs/2310.02601) — BEVFusion **+2.52 mAP / +1.95 NDS**.
+- **Panacea / Panacea+** [[paper]](https://arxiv.org/abs/2311.16813) — StreamPETR **+2.6 mAP / +2.3 NDS** (+AMOTA / lane).
+- **DrivingDiffusion** [[paper]](https://arxiv.org/abs/2310.07771) — det **NDS 0.412 → 0.434**.
+- **UniScene** [[paper]](https://arxiv.org/abs/2412.05435) — **only occ generator that closes the loop**: occ **+8.5 mIoU**, det **+3.13 mAP**. But occ is GT/layout-derived; long-tail only qualitative.
 
-**Skeptic's anchor — cite it, beat it:**
-- **Dream4Drive** — Rethinking the Driving World Model as a Synthetic Data Generator. *arXiv'25 (ICLR'26)*. [[paper]](https://arxiv.org/abs/2510.19195) — the augmentation benefit can become **negligible once you simply train longer on real data**; aggregate +mAP may be a training-budget artifact, not new information.
+**Skeptic's anchor — cite it, beat it:** **Dream4Drive** [[paper]](https://arxiv.org/abs/2510.19195) — the augmentation benefit can become **negligible once you simply train longer on real data**. Aggregate +mAP may be a training-budget artifact.
 
-> **The verified gap (the thesis of this list's frontier).** A **prior-driven, language-controlled OCCUPANCY** generator that **targets safety-critical / long-tail** scenes and **proves a downstream gain on a held-out RARE slice** does not exist in the verified literature. Three rules for claiming it honestly: (1) report **rare-class / held-out-scenario** downstream metrics, not aggregate mAP/NDS; (2) include the **train-longer-on-real control** (the Dream4Drive test); (3) avoid the **X-Drive trap** — mixing real + synthetic modalities hides the synthetic contribution.
+## Open frontiers
+
+The empty cells, stated as falsifiable targets:
+
+1. **Language → per-mover control** (rung 5). Natural-language steering of individual agents' future behavior, rolled out as physically consistent occ. Distinct from ego/trajectory control (SparseOccVLA, VLA-World) which steers *you*, not *them*.
+2. **Validated long-tail usefulness.** Even controllable occ generators (UniScene, X-Scene) validate only on **aggregate** downstream metrics — none proves a gain on a **held-out rare slice**. A *prior-driven, language-controlled occupancy generator that targets safety-critical scenes and proves a rare-slice downstream gain* does not exist in the verified literature. To claim it: (a) report **rare-class / held-out-scenario** metrics, not aggregate; (b) include the **train-longer-on-real** control (the Dream4Drive test); (c) avoid mixing real+synthetic modalities (which hides the synthetic contribution).
+3. **Reactive / counterfactual agents.** Do these models encode *causal* responses to interventions (`do(ego brakes)` → the follower reacts), or only replay observational correlation? Untested for occ world models — a diagnosis-first opening.
+
+---
+---
+
+# Borrowing from neighbors (machinery to port)
+
+## Video driving world models — what occ borrows
+
+*Occ's weakest axes (long-horizon stability, multi-view rendering, rich conditioning) are video's strongest. Each entry notes **what to port**.*
+
+**A. Anti-drift / long-horizon rollout** *(port: rollout schedules, memory, reference-frame anchoring).*
+- **GAIA-1** [[paper]](https://arxiv.org/abs/2309.17080) · **GAIA-2** [[paper]](https://arxiv.org/abs/2503.20523) — scaled generative driving world models; long, controllable rollouts.
+- **Vista** [[paper]](https://arxiv.org/abs/2405.17398) — high-fidelity, long-horizon, action-controllable; open-source.
+- **DrivingWorld** (video GPT) [[paper]](https://arxiv.org/abs/2412.19505) · **Epona / InfiniCube / Cosmos-Drive-Dreams** — long / infinite street-view generation.
+- **Wan** — open large-scale DiT video suite many anti-drift methods build on.
+
+**B. Multi-view spatial consistency** *(port: cross-view attention so 6 cameras / triplanes agree).*
+- **MagicDrive / MagicDrive-V2(DiT)** [[paper]](https://arxiv.org/abs/2411.13807) — BEV+box+text multi-view street view.
+- **Panacea** [[paper]](https://arxiv.org/abs/2311.16813) — panoramic multi-view video.
+- **Drive-WM** *CVPR'24* — masked multi-view prediction + image-reward trajectory selection.
+
+**C. Conditioning interfaces** *(port: how language/action/layout enter the denoiser).*
+- **DriveDreamer-2** [[paper]](https://arxiv.org/abs/2403.06845) — **LLM → trajectories → HDMap → video**; rare events + measured downstream gain (the template for text→layout→occ).
+- **GAIA-2** [[paper]](https://arxiv.org/abs/2503.20523) — multi-condition (ego, agents, weather) injection.
+
+**D. occ → video rendering (occ as the condition)** *(the two-stage "physics first, pixels second" paradigm).*
+- **WoVoGen** [[paper]](https://arxiv.org/abs/2312.02934) — 4D world-volume → multi-camera video.
+- **UniScene** [[paper]](https://arxiv.org/abs/2412.05435) — occ → Gaussian-rendered video + LiDAR.
+- **GenieDrive** [[paper]](https://arxiv.org/abs/2512.12751) — 4D occ → multi-view video with normalized multi-view attention.
+- **GenAD** [[paper]](https://arxiv.org/abs/2403.09630) — generalized video prediction for driving.
+
+## Language-controlled scenario generation — four mechanisms to port
+
+*How language is actually wired into generation at the trajectory/BEV/video level. Occ has adopted almost none of these — this is the menu.*
+
+- **A. LLM → structured intermediate → learned renderer** *(most portable to occ: text → layout/boxes → frozen occ generator; needs no paired text-occ data).* **LCTGen** [[paper]](https://arxiv.org/abs/2307.07947) · **InteractTraj** [[paper]](https://arxiv.org/abs/2405.15388) · **DriveDreamer-2** [[paper]](https://arxiv.org/abs/2403.06845) · **Text2Street** [[paper]](https://arxiv.org/abs/2402.04504).
+- **B. LLM → guidance loss as code → test-time-guide diffusion** *(no paired data; naturally adversarial/long-tail).* **CTG++** [[paper]](https://arxiv.org/abs/2306.06344) · **LD-Scene** (+ code-debugger/unit-test) [[paper]](https://arxiv.org/abs/2505.11247).
+- **C. Direct conditioning (cross-attn / prompt embeddings)** *(cleanest; needs paired text↔scene data).* **ProSim** (+ 520k pairs) [[paper]](https://arxiv.org/abs/2409.05863) · **SimGen** [[paper]](https://arxiv.org/abs/2406.09386).
+- **D. LLM-as-agent driving a tool/edit pipeline** *(flexible editing / report-grounded; heavyweight).* **ChatSim** [[paper]](https://arxiv.org/abs/2402.05746) · **CrashAgent** [[paper]](https://arxiv.org/abs/2505.18341) · **Seeking to Collide** [[paper]](https://arxiv.org/abs/2505.00972) · **AGENTS-LLM** [[paper]](https://arxiv.org/abs/2507.13729).
+
+## LiDAR / point-cloud world models
+
+*The other dense modality; shares tokenizer/diffusion machinery and the self-supervision story.*
+- **Copilot4D** — discrete-diffusion LiDAR world model. *ICLR'24*. [[paper]](https://arxiv.org/abs/2311.01017)
+- **LidarDM** — generative LiDAR simulation in a generated world. *ICRA'25*. [[paper]](https://arxiv.org/abs/2404.02903)
+- **DynamicCity** — large-scale 4D LiDAR/occ generation. *ICLR'25*. [[paper]](https://arxiv.org/abs/2410.18084)
+- **Foundational LiDAR WM** — Swin-VAE + latent flow matching. [[paper]](https://arxiv.org/abs/2506.23434)
 
 ---
 
 ## Surveys & other lists
- 
+
 - **Awesome-World-Model** (LMD0311) — broad world-model list. [[repo]](https://github.com/LMD0311/Awesome-World-Model)
 - **World-Models-Autonomous-Driving-Survey** (HaoranZhuExplorer). [[repo]](https://github.com/HaoranZhuExplorer/World-Models-Autonomous-Driving-Survey)
 - **3D-Occupancy-Perception** (HuaiyuanXu) — occ *perception* survey + list. [[repo]](https://github.com/HuaiyuanXu/3D-Occupancy-Perception)
-- *A Survey of World Models for Autonomous Driving*, *NeurIPS'25*; *The Role of World Models in Shaping Autonomous Driving*, *arXiv'25* [[paper]](https://arxiv.org/abs/2502.10498).
+- *A Survey of World Models for Autonomous Driving*, *NeurIPS'25* [[paper]](https://arxiv.org/abs/2501.11260) · *The Role of World Models in Shaping Autonomous Driving* [[paper]](https://arxiv.org/abs/2502.10498).
+
 ---
- 
-## Two caveats before you compare numbers
- 
-These two pitfalls invalidate a lot of head-to-head claims — bake them into any comparison.
- 
-1. **The ego confound.** Diffusion leaders consume **GT ego-trajectory**; AR methods **predict** it. Comparing a model that's told where the ego goes against one that isn't is not apples-to-apples. Always state which regime each row is in.
-2. **Regime mismatch (vision-centric vs. GT-occ-token).** Gaussian world models (GaussianWorld, GEM) take **RGB** in; the GenieDrive/COME/I²-World board takes **GT occupancy tokens** in. GEM ≈ 13.6 mIoU vs. COME 34.2 is **not the same race** — never put them in one column.
-3. **Aggregate mIoU is static-dominated.** Background voxels dominate the count; mover accuracy at horizon is the thing that's actually unsolved. Prefer dynamic × horizon breakdowns.
----
- 
-*PRs welcome. Organized by research direction rather than date — if a paper fits multiple directions, it is listed under each.*
+
+*Organized by design axis rather than date — a paper that sits on multiple axes is listed under each. PRs welcome: place a new paper on its axes and, if it makes a downstream-usefulness or long-tail claim, say whether it's measured or asserted.*
